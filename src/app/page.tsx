@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import TicTacToe from "@/components/TicTacToe";
+import FlappyBird from "@/components/FlappyBird";
 
-type GameType = "menu" | "tictactoe";
+type GameType = "menu" | "tictactoe" | "flappybird";
 
 interface GameCard {
   id: GameType;
@@ -23,6 +24,14 @@ const games: GameCard[] = [
     color: "bg-rose-500",
     rotation: "-rotate-2",
   },
+  {
+    id: "flappybird",
+    title: "Flappy Bird",
+    description: "Tap to fly through pipes. How far can you go?",
+    emoji: "🐦",
+    color: "bg-lime-500",
+    rotation: "rotate-2",
+  },
 ];
 
 function GameLauncher({ onSelectGame }: { onSelectGame: (game: GameType) => void }) {
@@ -40,7 +49,7 @@ function GameLauncher({ onSelectGame }: { onSelectGame: (game: GameType) => void
       </p>
 
       {/* Game Cards */}
-      <div className="flex justify-center gap-6 max-w-2xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl px-4">
         {games.map((game) => (
           <button
             key={game.id}
@@ -95,6 +104,10 @@ export default function Home() {
 
         {currentGame === "tictactoe" && (
           <TicTacToe onBack={handleBack} />
+        )}
+
+        {currentGame === "flappybird" && (
+          <FlappyBird onBack={handleBack} />
         )}
       </div>
     </div>
