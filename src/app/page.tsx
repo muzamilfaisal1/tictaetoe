@@ -199,13 +199,13 @@ function Square({
   return (
     <button
       disabled={disabled}
-      className={`relative w-24 h-24 sm:w-28 sm:h-28 text-5xl sm:text-6xl font-bold rounded-2xl transition-all duration-300 flex items-center justify-center
+      className={`relative w-24 h-24 sm:w-28 sm:h-28 text-5xl sm:text-6xl font-bold rounded-2xl transition-colors duration-300 flex items-center justify-center
         backdrop-blur-sm border-2 overflow-hidden group
         ${isWinning
           ? "bg-gradient-to-br from-emerald-400/30 to-cyan-400/30 border-emerald-400 shadow-[0_0_30px_rgba(52,211,153,0.5)]"
-          : "bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+          : "bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]"
         }
-        ${!value && !isWinning && !disabled ? "cursor-pointer" : ""}
+        ${!value && !isWinning && !disabled ? "cursor-pointer hover:scale-105 transition-transform" : ""}
         ${disabled && !value ? "opacity-50 cursor-not-allowed" : ""}
       `}
       onClick={onClick}
@@ -633,7 +633,7 @@ export default function Home() {
 
               {line && lineStyle && (
                 <div
-                  className={`absolute ${lineStyle} bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 rounded-full pointer-events-none z-10 animate-pulse shadow-[0_0_20px_rgba(52,211,153,0.8)]`}
+                  className={`absolute ${lineStyle} bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 rounded-full pointer-events-none z-10 shadow-[0_0_20px_rgba(52,211,153,0.8)]`}
                 />
               )}
             </div>
