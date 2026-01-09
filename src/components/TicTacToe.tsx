@@ -337,24 +337,25 @@ export default function TicTacToe({ onBack }: { onBack: () => void }) {
   const lineStyle = lineStyles[lineKey];
 
   return (
-    <div className="flex flex-col items-center">
-      {/* Sound toggle */}
-      <button
-        onClick={() => setSoundEnabled(!soundEnabled)}
-        className="absolute top-4 right-4 z-20 w-12 h-12 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold text-xl
-          hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-100"
-      >
-        {soundEnabled ? "🔊" : "🔇"}
-      </button>
+    <div className="flex flex-col items-center w-full">
+      {/* Top bar with back and sound buttons */}
+      <div className="w-full flex justify-between items-center mb-6 px-4">
+        <button
+          onClick={onBack}
+          className="px-4 py-2 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold
+            hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-100"
+        >
+          ← Games
+        </button>
 
-      {/* Back button */}
-      <button
-        onClick={onBack}
-        className="absolute top-4 left-4 z-20 px-4 py-2 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold
-          hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-100"
-      >
-        ← Games
-      </button>
+        <button
+          onClick={() => setSoundEnabled(!soundEnabled)}
+          className="w-12 h-12 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold text-xl
+            hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-100"
+        >
+          {soundEnabled ? "🔊" : "🔇"}
+        </button>
+      </div>
 
       {/* Title */}
       <div className="bg-rose-500 border-4 border-black px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-6 -rotate-1">
