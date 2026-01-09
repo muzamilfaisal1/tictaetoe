@@ -147,13 +147,13 @@ function Square({
     <button
       disabled={disabled}
       onClick={onClick}
-      className={`w-24 h-24 sm:w-28 sm:h-28 text-5xl sm:text-6xl font-black border-4 border-black flex items-center justify-center
+      className={`w-28 h-28 sm:w-32 sm:h-32 text-5xl sm:text-7xl font-black border-4 border-black flex items-center justify-center
         transition-all duration-100
         ${isWinning
           ? "bg-lime-400"
           : "bg-white hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
         }
-        ${!isWinning ? "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" : "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"}
+        shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
         ${!value && !disabled ? "cursor-pointer hover:bg-gray-100" : ""}
         ${disabled && !value ? "opacity-60" : ""}
       `}
@@ -191,12 +191,12 @@ function NeuButton({
 }
 
 const lineStyles: Record<string, string> = {
-  "0,1,2": "top-[3rem] sm:top-14 left-2 right-2 h-2",
+  "0,1,2": "top-14 sm:top-16 left-2 right-2 h-2",
   "3,4,5": "top-1/2 -translate-y-1/2 left-2 right-2 h-2",
-  "6,7,8": "bottom-[3rem] sm:bottom-14 left-2 right-2 h-2",
-  "0,3,6": "left-[3rem] sm:left-14 top-2 bottom-2 w-2",
+  "6,7,8": "bottom-14 sm:bottom-16 left-2 right-2 h-2",
+  "0,3,6": "left-14 sm:left-16 top-2 bottom-2 w-2",
   "1,4,7": "left-1/2 -translate-x-1/2 top-2 bottom-2 w-2",
-  "2,5,8": "right-[3rem] sm:right-14 top-2 bottom-2 w-2",
+  "2,5,8": "right-14 sm:right-16 top-2 bottom-2 w-2",
   "0,4,8": "top-1/2 left-1/2 w-[130%] h-2 -translate-x-1/2 -translate-y-1/2 rotate-45",
   "2,4,6": "top-1/2 left-1/2 w-[130%] h-2 -translate-x-1/2 -translate-y-1/2 -rotate-45",
 };
@@ -339,18 +339,18 @@ export default function TicTacToe({ onBack }: { onBack: () => void }) {
   return (
     <div className="flex flex-col items-center w-full">
       {/* Top bar with back and sound buttons */}
-      <div className="w-full flex justify-between items-center mb-6 px-4">
+      <div className="w-full flex justify-between items-center mb-4 px-4">
         <button
           onClick={onBack}
-          className="px-4 py-2 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold
+          className="px-3 py-2 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold text-sm
             hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-100"
         >
-          ← Games
+          ← Back
         </button>
 
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
-          className="w-12 h-12 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold text-xl
+          className="w-10 h-10 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold text-lg
             hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-100"
         >
           {soundEnabled ? "🔊" : "🔇"}
@@ -358,8 +358,8 @@ export default function TicTacToe({ onBack }: { onBack: () => void }) {
       </div>
 
       {/* Title */}
-      <div className="bg-rose-500 border-4 border-black px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-6 -rotate-1">
-        <h1 className="text-3xl sm:text-4xl font-black text-white">TIC TAC TOE</h1>
+      <div className="bg-rose-500 border-4 border-black px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-4 -rotate-1">
+        <h1 className="text-2xl sm:text-4xl font-black text-white">TIC TAC TOE</h1>
       </div>
 
       {gameMode === "menu" ? (
