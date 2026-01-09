@@ -428,7 +428,6 @@ export default function Home() {
   const [scores, setScores] = useState({ X: 0, O: 0, draws: 0 });
   const [showConfetti, setShowConfetti] = useState(false);
   const [history, setHistory] = useState<Player[][]>([Array(9).fill(null)]);
-  const [isThinking, setIsThinking] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   const { playSound } = useSound();
@@ -453,26 +452,21 @@ export default function Home() {
 
   // Computer move
   useEffect(() => {
-    if (gameMode === "pvc" && !isXNext && !isGameOver && !isThinking) {
-      setIsThinking(true);
-      const timer = setTimeout(() => {
-        const bestMove = getBestMove(squares, difficulty);
-        if (bestMove !== -1) {
-          const newSquares = [...squares];
-          newSquares[bestMove] = "O";
-          setSquares(newSquares);
-          setHistory((prev) => [...prev, newSquares]);
-          setIsXNext(true);
-          if (soundEnabled) playSound("move");
-        }
-        setIsThinking(false);
-      }, 500);
-      return () => clearTimeout(timer);
+    if (gameMode === "pvc" && !isXNext && !isGameOver) {
+      const bestMove = getBestMove(squares, difficulty);
+      if (bestMove !== -1) {
+        const newSquares = [...squares];
+        newSquares[bestMove] = "O";
+        setSquares(newSquares);
+        setHistory((prev) => [...prev, newSquares]);
+        setIsXNext(true);
+        if (soundEnabled) playSound("move");
+      }
     }
-  }, [isXNext, gameMode, squares, difficulty, isGameOver, isThinking, soundEnabled, playSound]);
+  }, [isXNext, gameMode, squares, difficulty, isGameOver, soundEnabled, playSound]);
 
   const handleClick = (index: number) => {
-    if (squares[index] || winner || isThinking) return;
+    if (squares[index] || winner) return;
     if (gameMode === "pvc" && !isXNext) return;
 
     const newSquares = [...squares];
@@ -507,7 +501,6 @@ export default function Home() {
     setSquares(Array(9).fill(null));
     setHistory([Array(9).fill(null)]);
     setIsXNext(true);
-    setIsThinking(false);
   };
 
   const backToMenu = () => {
@@ -598,10 +591,6 @@ export default function Home() {
                 </span>
               ) : isDraw ? (
                 <span>🤝 It&apos;s a Draw! 🤝</span>
-              ) : isThinking ? (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin">🤖</span> Computer thinking...
-                </span>
               ) : (
                 <span className="flex items-center gap-2">
                   {gameMode === "pvc" ? "Your turn" : "Next:"}
@@ -628,7 +617,7 @@ export default function Home() {
                     onClick={() => handleClick(index)}
                     isWinning={line?.includes(index) || false}
                     index={index}
-                    disabled={isThinking || isGameOver}
+                    disabled={isGameOver}
                   />
                 ))}
               </div>
@@ -644,7 +633,7 @@ export default function Home() {
             <div className="flex flex-wrap justify-center gap-3 mt-6">
               <button
                 onClick={handleUndo}
-                disabled={history.length <= 1 || isThinking}
+                disabled={history.length <= 1}
                 className="group relative px-5 py-2.5 rounded-xl font-bold text-white overflow-hidden transition-all duration-300 hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-amber-600 to-orange-600" />
