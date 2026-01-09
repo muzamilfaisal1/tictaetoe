@@ -450,18 +450,21 @@ export default function Home() {
     }
   }, [winner, isDraw, soundEnabled, playSound]);
 
-  // Computer move
+  // Computer move (300ms delay for natural feel)
   useEffect(() => {
     if (gameMode === "pvc" && !isXNext && !isGameOver) {
-      const bestMove = getBestMove(squares, difficulty);
-      if (bestMove !== -1) {
-        const newSquares = [...squares];
-        newSquares[bestMove] = "O";
-        setSquares(newSquares);
-        setHistory((prev) => [...prev, newSquares]);
-        setIsXNext(true);
-        if (soundEnabled) playSound("move");
-      }
+      const timer = setTimeout(() => {
+        const bestMove = getBestMove(squares, difficulty);
+        if (bestMove !== -1) {
+          const newSquares = [...squares];
+          newSquares[bestMove] = "O";
+          setSquares(newSquares);
+          setHistory((prev) => [...prev, newSquares]);
+          setIsXNext(true);
+          if (soundEnabled) playSound("move");
+        }
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [isXNext, gameMode, squares, difficulty, isGameOver, soundEnabled, playSound]);
 
