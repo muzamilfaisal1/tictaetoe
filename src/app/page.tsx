@@ -202,7 +202,7 @@ function Square({
       className={`relative w-24 h-24 sm:w-28 sm:h-28 text-5xl sm:text-6xl font-bold rounded-2xl transition-all duration-300 flex items-center justify-center
         backdrop-blur-sm border-2 overflow-hidden group
         ${isWinning
-          ? "bg-gradient-to-br from-emerald-400/30 to-cyan-400/30 border-emerald-400 shadow-[0_0_30px_rgba(52,211,153,0.5)] scale-105"
+          ? "bg-gradient-to-br from-emerald-400/30 to-cyan-400/30 border-emerald-400 shadow-[0_0_30px_rgba(52,211,153,0.5)]"
           : "bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]"
         }
         ${!value && !isWinning && !disabled ? "cursor-pointer" : ""}
@@ -429,6 +429,7 @@ export default function Home() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [history, setHistory] = useState<Player[][]>([Array(9).fill(null)]);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [gameEnded, setGameEnded] = useState(false);
 
   const { playSound } = useSound();
 
@@ -436,19 +437,23 @@ export default function Home() {
   const isDraw = !winner && squares.every((square) => square !== null);
   const isGameOver = !!winner || isDraw;
 
-  // Handle score updates
+  // Handle score updates (only once per game)
   useEffect(() => {
+    if (gameEnded) return;
+
     if (winner) {
+      setGameEnded(true);
       setShowConfetti(true);
       setScores((prev) => ({ ...prev, [winner]: prev[winner as "X" | "O"] + 1 }));
       if (soundEnabled) playSound("win");
       const timer = setTimeout(() => setShowConfetti(false), 3000);
       return () => clearTimeout(timer);
     } else if (isDraw) {
+      setGameEnded(true);
       setScores((prev) => ({ ...prev, draws: prev.draws + 1 }));
       if (soundEnabled) playSound("draw");
     }
-  }, [winner, isDraw, soundEnabled, playSound]);
+  }, [winner, isDraw, soundEnabled, playSound, gameEnded]);
 
   // Computer move (500ms delay for natural feel)
   useEffect(() => {
@@ -504,6 +509,7 @@ export default function Home() {
     setSquares(Array(9).fill(null));
     setHistory([Array(9).fill(null)]);
     setIsXNext(true);
+    setGameEnded(false);
   };
 
   const backToMenu = () => {
@@ -582,7 +588,7 @@ export default function Home() {
             <div
               className={`text-lg sm:text-xl font-bold mb-4 px-5 py-2 rounded-full backdrop-blur-sm transition-all duration-500
                 ${winner
-                  ? "bg-gradient-to-r from-emerald-500/30 to-cyan-500/30 text-emerald-300 border border-emerald-500/50 shadow-[0_0_20px_rgba(52,211,153,0.3)] animate-bounce"
+                  ? "bg-gradient-to-r from-emerald-500/30 to-cyan-500/30 text-emerald-300 border border-emerald-500/50 shadow-[0_0_20px_rgba(52,211,153,0.3)]"
                   : isDraw
                   ? "bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-300 border border-amber-500/50"
                   : "bg-white/10 text-white/90 border border-white/20"
