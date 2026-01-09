@@ -6,8 +6,9 @@ import FlappyBird from "@/components/FlappyBird";
 import Snake from "@/components/Snake";
 import Asteroids from "@/components/Asteroids";
 import EndlessRunner from "@/components/EndlessRunner";
+import Tetris from "@/components/Tetris";
 
-type GameType = "menu" | "tictactoe" | "flappybird" | "snake" | "asteroids" | "endlessrunner";
+type GameType = "menu" | "tictactoe" | "flappybird" | "snake" | "asteroids" | "endlessrunner" | "tetris";
 
 interface GameCard {
   id: GameType;
@@ -58,6 +59,14 @@ const games: GameCard[] = [
     emoji: "🏎️",
     color: "bg-gradient-to-r from-purple-500 to-pink-500",
     rotation: "-rotate-1",
+  },
+  {
+    id: "tetris",
+    title: "Tetris",
+    description: "Stack falling blocks and clear lines. How long can you last?",
+    emoji: "🧱",
+    color: "bg-cyan-500",
+    rotation: "rotate-1",
   },
 ];
 
@@ -147,6 +156,10 @@ export default function Home() {
 
         {currentGame === "endlessrunner" && (
           <EndlessRunner onBack={handleBack} />
+        )}
+
+        {currentGame === "tetris" && (
+          <Tetris onBack={handleBack} />
         )}
       </div>
     </div>
