@@ -450,7 +450,7 @@ export default function Home() {
     }
   }, [winner, isDraw, soundEnabled, playSound]);
 
-  // Computer move (300ms delay for natural feel)
+  // Computer move (500ms delay for natural feel)
   useEffect(() => {
     if (gameMode === "pvc" && !isXNext && !isGameOver) {
       const timer = setTimeout(() => {
@@ -463,7 +463,7 @@ export default function Home() {
           setIsXNext(true);
           if (soundEnabled) playSound("move");
         }
-      }, 300);
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [isXNext, gameMode, squares, difficulty, isGameOver, soundEnabled, playSound]);
