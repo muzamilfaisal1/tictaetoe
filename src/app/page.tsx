@@ -1,479 +1,113 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import TicTacToe from "@/components/TicTacToe";
+import RockPaperScissors from "@/components/RockPaperScissors";
 
-type Player = "X" | "O" | null;
-type GameMode = "menu" | "pvp" | "pvc";
-type Difficulty = "easy" | "medium" | "hard";
+type GameType = "menu" | "tictactoe" | "rps";
 
-type WinResult = {
-  winner: Player;
-  line: number[] | null;
-};
-
-function calculateWinner(squares: Player[]): WinResult {
-  const lines = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8],
-    [0, 3, 6], [1, 4, 7], [2, 5, 8],
-    [0, 4, 8], [2, 4, 6],
-  ];
-
-  for (const [a, b, c] of lines) {
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return { winner: squares[a], line: [a, b, c] };
-    }
-  }
-  return { winner: null, line: null };
+interface GameCard {
+  id: GameType;
+  title: string;
+  description: string;
+  emoji: string;
+  color: string;
+  rotation: string;
 }
 
-function minimax(squares: Player[], depth: number, isMaximizing: boolean, alpha: number, beta: number): number {
-  const { winner } = calculateWinner(squares);
-  if (winner === "O") return 10 - depth;
-  if (winner === "X") return depth - 10;
-  if (squares.every((s) => s !== null)) return 0;
+const games: GameCard[] = [
+  {
+    id: "tictactoe",
+    title: "Tic Tac Toe",
+    description: "Classic X and O game. Play against a friend or computer!",
+    emoji: "⭕",
+    color: "bg-rose-500",
+    rotation: "-rotate-2",
+  },
+  {
+    id: "rps",
+    title: "Rock Paper Scissors",
+    description: "Test your luck against the computer!",
+    emoji: "✂️",
+    color: "bg-violet-500",
+    rotation: "rotate-2",
+  },
+];
 
-  if (isMaximizing) {
-    let maxEval = -Infinity;
-    for (let i = 0; i < 9; i++) {
-      if (!squares[i]) {
-        squares[i] = "O";
-        const evalScore = minimax(squares, depth + 1, false, alpha, beta);
-        squares[i] = null;
-        maxEval = Math.max(maxEval, evalScore);
-        alpha = Math.max(alpha, evalScore);
-        if (beta <= alpha) break;
-      }
-    }
-    return maxEval;
-  } else {
-    let minEval = Infinity;
-    for (let i = 0; i < 9; i++) {
-      if (!squares[i]) {
-        squares[i] = "X";
-        const evalScore = minimax(squares, depth + 1, true, alpha, beta);
-        squares[i] = null;
-        minEval = Math.min(minEval, evalScore);
-        beta = Math.min(beta, evalScore);
-        if (beta <= alpha) break;
-      }
-    }
-    return minEval;
-  }
-}
-
-function getBestMove(squares: Player[], difficulty: Difficulty): number {
-  const emptySquares = squares.map((s, i) => (s === null ? i : -1)).filter((i) => i !== -1);
-  if (emptySquares.length === 0) return -1;
-
-  if (difficulty === "easy") {
-    return emptySquares[Math.floor(Math.random() * emptySquares.length)];
-  }
-  if (difficulty === "medium" && Math.random() < 0.5) {
-    return emptySquares[Math.floor(Math.random() * emptySquares.length)];
-  }
-
-  let bestScore = -Infinity;
-  let bestMove = emptySquares[0];
-  for (const i of emptySquares) {
-    const newSquares = [...squares];
-    newSquares[i] = "O";
-    const score = minimax(newSquares, 0, false, -Infinity, Infinity);
-    if (score > bestScore) {
-      bestScore = score;
-      bestMove = i;
-    }
-  }
-  return bestMove;
-}
-
-function useSound() {
-  const playSound = useCallback((type: "move" | "win" | "draw" | "click") => {
-    if (typeof window === "undefined") return;
-    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    switch (type) {
-      case "move":
-        oscillator.frequency.value = 600;
-        oscillator.type = "sine";
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.1);
-        break;
-      case "win":
-        oscillator.frequency.value = 523.25;
-        oscillator.type = "sine";
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.15);
-        break;
-      case "draw":
-        oscillator.frequency.value = 300;
-        oscillator.type = "triangle";
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.3);
-        break;
-      case "click":
-        oscillator.frequency.value = 800;
-        oscillator.type = "sine";
-        gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.05);
-        break;
-    }
-  }, []);
-  return { playSound };
-}
-
-function Square({
-  value,
-  onClick,
-  isWinning,
-  disabled,
-}: {
-  value: Player;
-  onClick: () => void;
-  isWinning: boolean;
-  disabled: boolean;
-}) {
+function GameLauncher({ onSelectGame }: { onSelectGame: (game: GameType) => void }) {
   return (
-    <button
-      disabled={disabled}
-      onClick={onClick}
-      className={`w-24 h-24 sm:w-28 sm:h-28 text-5xl sm:text-6xl font-black border-4 border-black flex items-center justify-center
-        transition-all duration-100
-        ${isWinning
-          ? "bg-lime-400"
-          : "bg-white hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
-        }
-        ${!isWinning ? "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" : "shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"}
-        ${!value && !disabled ? "cursor-pointer hover:bg-gray-100" : ""}
-        ${disabled && !value ? "opacity-60" : ""}
-      `}
-    >
-      <span className={value === "X" ? "text-rose-500" : "text-violet-600"}>
-        {value}
-      </span>
-    </button>
-  );
-}
-
-function NeuButton({
-  onClick,
-  children,
-  color = "bg-yellow-400",
-  disabled = false,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-  color?: string;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`${color} px-6 py-3 font-bold text-black border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
-        hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-100
-        disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
-      `}
-    >
-      {children}
-    </button>
-  );
-}
-
-const lineStyles: Record<string, string> = {
-  "0,1,2": "top-[3rem] sm:top-14 left-2 right-2 h-2",
-  "3,4,5": "top-1/2 -translate-y-1/2 left-2 right-2 h-2",
-  "6,7,8": "bottom-[3rem] sm:bottom-14 left-2 right-2 h-2",
-  "0,3,6": "left-[3rem] sm:left-14 top-2 bottom-2 w-2",
-  "1,4,7": "left-1/2 -translate-x-1/2 top-2 bottom-2 w-2",
-  "2,5,8": "right-[3rem] sm:right-14 top-2 bottom-2 w-2",
-  "0,4,8": "top-1/2 left-1/2 w-[130%] h-2 -translate-x-1/2 -translate-y-1/2 rotate-45",
-  "2,4,6": "top-1/2 left-1/2 w-[130%] h-2 -translate-x-1/2 -translate-y-1/2 -rotate-45",
-};
-
-function MenuScreen({
-  onSelectMode,
-  playSound,
-}: {
-  onSelectMode: (mode: GameMode, difficulty?: Difficulty) => void;
-  playSound: (type: "click") => void;
-}) {
-  const [showDifficulty, setShowDifficulty] = useState(false);
-
-  return (
-    <div className="flex flex-col items-center gap-8">
-      <div className="bg-rose-500 border-4 border-black px-8 py-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] -rotate-2">
-        <h1 className="text-5xl sm:text-7xl font-black text-white tracking-tight">
-          TIC TAC TOE
+    <div className="flex flex-col items-center">
+      {/* Title */}
+      <div className="bg-cyan-400 border-4 border-black px-8 py-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mb-4 -rotate-1">
+        <h1 className="text-4xl sm:text-6xl font-black text-black tracking-tight">
+          GAME ZONE
         </h1>
       </div>
 
-      <p className="text-xl font-bold text-black bg-yellow-400 px-4 py-2 border-4 border-black">
-        Choose your game mode
+      <p className="text-xl font-bold text-black mb-8 bg-yellow-400 px-4 py-2 border-4 border-black">
+        Choose a game to play!
       </p>
 
-      {!showDifficulty ? (
-        <div className="flex flex-col gap-4 w-full max-w-xs">
-          <NeuButton
-            onClick={() => {
-              playSound("click");
-              onSelectMode("pvp");
-            }}
-            color="bg-cyan-400"
-          >
-            <span className="text-xl">Player vs Player</span>
-          </NeuButton>
-
-          <NeuButton
-            onClick={() => {
-              playSound("click");
-              setShowDifficulty(true);
-            }}
-            color="bg-violet-400"
-          >
-            <span className="text-xl">Player vs Computer</span>
-          </NeuButton>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4 w-full max-w-xs">
-          <p className="text-lg font-bold text-center text-black">Select Difficulty</p>
-
-          <NeuButton
-            onClick={() => { playSound("click"); onSelectMode("pvc", "easy"); }}
-            color="bg-lime-400"
-          >
-            <span className="text-xl">Easy</span>
-          </NeuButton>
-
-          <NeuButton
-            onClick={() => { playSound("click"); onSelectMode("pvc", "medium"); }}
-            color="bg-orange-400"
-          >
-            <span className="text-xl">Medium</span>
-          </NeuButton>
-
-          <NeuButton
-            onClick={() => { playSound("click"); onSelectMode("pvc", "hard"); }}
-            color="bg-rose-500"
-          >
-            <span className="text-xl">Hard</span>
-          </NeuButton>
-
+      {/* Game Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
+        {games.map((game) => (
           <button
-            onClick={() => { playSound("click"); setShowDifficulty(false); }}
-            className="mt-2 font-bold text-black underline underline-offset-4 hover:text-gray-600"
+            key={game.id}
+            onClick={() => onSelectGame(game.id)}
+            className={`${game.color} ${game.rotation} p-6 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]
+              hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all duration-100
+              text-left group`}
           >
-            ← Back
+            <div className="text-6xl mb-4">{game.emoji}</div>
+            <h2 className="text-2xl font-black text-white mb-2">{game.title}</h2>
+            <p className="text-sm font-bold text-white/90">{game.description}</p>
+            <div className="mt-4 inline-block bg-white text-black font-bold px-4 py-2 border-4 border-black
+              group-hover:bg-yellow-400 transition-colors">
+              PLAY NOW →
+            </div>
           </button>
-        </div>
-      )}
+        ))}
+      </div>
+
+      {/* Coming Soon */}
+      <div className="mt-8 bg-gray-300 border-4 border-black px-6 py-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+        <p className="font-bold text-black text-center">
+          🚧 More games coming soon! 🚧
+        </p>
+      </div>
     </div>
   );
 }
 
 export default function Home() {
-  const [gameMode, setGameMode] = useState<GameMode>("menu");
-  const [difficulty, setDifficulty] = useState<Difficulty>("medium");
-  const [squares, setSquares] = useState<Player[]>(Array(9).fill(null));
-  const [isXNext, setIsXNext] = useState(true);
-  const [scores, setScores] = useState({ X: 0, O: 0, draws: 0 });
-  const [history, setHistory] = useState<Player[][]>([Array(9).fill(null)]);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [gameEnded, setGameEnded] = useState(false);
+  const [currentGame, setCurrentGame] = useState<GameType>("menu");
 
-  const { playSound } = useSound();
-  const { winner, line } = calculateWinner(squares);
-  const isDraw = !winner && squares.every((square) => square !== null);
-  const isGameOver = !!winner || isDraw;
-
-  useEffect(() => {
-    if (gameEnded) return;
-    if (winner) {
-      setGameEnded(true);
-      setScores((prev) => ({ ...prev, [winner]: prev[winner as "X" | "O"] + 1 }));
-      if (soundEnabled) playSound("win");
-    } else if (isDraw) {
-      setGameEnded(true);
-      setScores((prev) => ({ ...prev, draws: prev.draws + 1 }));
-      if (soundEnabled) playSound("draw");
-    }
-  }, [winner, isDraw, soundEnabled, playSound, gameEnded]);
-
-  useEffect(() => {
-    if (gameMode === "pvc" && !isXNext && !isGameOver) {
-      const timer = setTimeout(() => {
-        const bestMove = getBestMove(squares, difficulty);
-        if (bestMove !== -1) {
-          const newSquares = [...squares];
-          newSquares[bestMove] = "O";
-          setSquares(newSquares);
-          setHistory((prev) => [...prev, newSquares]);
-          setIsXNext(true);
-          if (soundEnabled) playSound("move");
-        }
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isXNext, gameMode, squares, difficulty, isGameOver, soundEnabled, playSound]);
-
-  const handleClick = (index: number) => {
-    if (squares[index] || winner) return;
-    if (gameMode === "pvc" && !isXNext) return;
-    const newSquares = [...squares];
-    newSquares[index] = isXNext ? "X" : "O";
-    setSquares(newSquares);
-    setHistory((prev) => [...prev, newSquares]);
-    setIsXNext(!isXNext);
-    if (soundEnabled) playSound("move");
+  const handleBack = () => {
+    setCurrentGame("menu");
   };
-
-  const handleUndo = () => {
-    if (history.length <= 1) return;
-    if (soundEnabled) playSound("click");
-    if (gameMode === "pvc") {
-      const newHistory = history.slice(0, -2);
-      if (newHistory.length === 0) newHistory.push(Array(9).fill(null));
-      setHistory(newHistory);
-      setSquares(newHistory[newHistory.length - 1]);
-      setIsXNext(true);
-    } else {
-      const newHistory = history.slice(0, -1);
-      setHistory(newHistory);
-      setSquares(newHistory[newHistory.length - 1]);
-      setIsXNext(!isXNext);
-    }
-  };
-
-  const resetGame = () => {
-    if (soundEnabled) playSound("click");
-    setSquares(Array(9).fill(null));
-    setHistory([Array(9).fill(null)]);
-    setIsXNext(true);
-    setGameEnded(false);
-  };
-
-  const backToMenu = () => {
-    if (soundEnabled) playSound("click");
-    setGameMode("menu");
-    resetGame();
-  };
-
-  const handleSelectMode = (mode: GameMode, diff?: Difficulty) => {
-    setGameMode(mode);
-    if (diff) setDifficulty(diff);
-    resetGame();
-  };
-
-  const lineKey = line?.join(",") || "";
-  const lineStyle = lineStyles[lineKey];
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-amber-200">
       {/* Pattern background */}
-      <div className="fixed inset-0 opacity-30" style={{
-        backgroundImage: `radial-gradient(circle, #000 1px, transparent 1px)`,
-        backgroundSize: '24px 24px'
-      }} />
-
-      {/* Sound toggle */}
-      <button
-        onClick={() => setSoundEnabled(!soundEnabled)}
-        className="absolute top-4 right-4 z-20 w-12 h-12 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] font-bold text-xl
-          hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-100"
-      >
-        {soundEnabled ? "🔊" : "🔇"}
-      </button>
+      <div
+        className="fixed inset-0 opacity-30 pointer-events-none"
+        style={{
+          backgroundImage: `radial-gradient(circle, #000 1px, transparent 1px)`,
+          backgroundSize: "24px 24px",
+        }}
+      />
 
       <div className="relative z-10 flex flex-col items-center">
-        {gameMode === "menu" ? (
-          <MenuScreen onSelectMode={handleSelectMode} playSound={playSound} />
-        ) : (
-          <>
-            {/* Title */}
-            <div className="bg-rose-500 border-4 border-black px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-6 -rotate-1">
-              <h1 className="text-3xl sm:text-4xl font-black text-white">TIC TAC TOE</h1>
-            </div>
+        {currentGame === "menu" && (
+          <GameLauncher onSelectGame={setCurrentGame} />
+        )}
 
-            {/* Mode indicator */}
-            <div className="mb-4 px-4 py-1 bg-white border-4 border-black font-bold text-sm">
-              {gameMode === "pvp" ? "Player vs Player" : `vs Computer (${difficulty})`}
-            </div>
+        {currentGame === "tictactoe" && (
+          <TicTacToe onBack={handleBack} />
+        )}
 
-            {/* Scoreboard */}
-            <div className="flex gap-3 mb-6">
-              <div className="px-4 py-2 bg-rose-400 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="text-xs font-bold text-black">{gameMode === "pvc" ? "YOU (X)" : "PLAYER X"}</div>
-                <div className="text-3xl font-black text-black">{scores.X}</div>
-              </div>
-              <div className="px-4 py-2 bg-gray-200 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="text-xs font-bold text-black">DRAWS</div>
-                <div className="text-3xl font-black text-black">{scores.draws}</div>
-              </div>
-              <div className="px-4 py-2 bg-violet-400 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="text-xs font-bold text-black">{gameMode === "pvc" ? "COMPUTER" : "PLAYER O"}</div>
-                <div className="text-3xl font-black text-black">{scores.O}</div>
-              </div>
-            </div>
-
-            {/* Status */}
-            <div className={`mb-4 px-6 py-2 border-4 border-black font-bold text-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
-              ${winner ? "bg-lime-400" : isDraw ? "bg-orange-400" : "bg-cyan-400"}`}
-            >
-              {winner ? (
-                <span>{gameMode === "pvc" ? (winner === "X" ? "YOU WIN!" : "COMPUTER WINS!") : `PLAYER ${winner} WINS!`}</span>
-              ) : isDraw ? (
-                <span>IT&apos;S A DRAW!</span>
-              ) : (
-                <span>
-                  {gameMode === "pvc" ? "YOUR TURN: " : "NEXT: "}
-                  <span className={isXNext ? "text-rose-600" : "text-violet-700"}>{isXNext ? "X" : "O"}</span>
-                </span>
-              )}
-            </div>
-
-            {/* Game Board */}
-            <div className="relative p-4 bg-yellow-400 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-              <div className="grid grid-cols-3 gap-3">
-                {squares.map((square, index) => (
-                  <Square
-                    key={index}
-                    value={square}
-                    onClick={() => handleClick(index)}
-                    isWinning={line?.includes(index) || false}
-                    disabled={isGameOver}
-                  />
-                ))}
-              </div>
-
-              {/* Winning line */}
-              {line && lineStyle && (
-                <div className={`absolute ${lineStyle} bg-black rounded-full pointer-events-none z-10`} />
-              )}
-            </div>
-
-            {/* Buttons */}
-            <div className="flex flex-wrap justify-center gap-3 mt-6">
-              <NeuButton onClick={handleUndo} color="bg-orange-400" disabled={history.length <= 1}>
-                ↩ Undo
-              </NeuButton>
-              <NeuButton onClick={resetGame} color="bg-cyan-400">
-                New Game
-              </NeuButton>
-              <NeuButton onClick={backToMenu} color="bg-violet-400">
-                Menu
-              </NeuButton>
-            </div>
-          </>
+        {currentGame === "rps" && (
+          <RockPaperScissors onBack={handleBack} />
         )}
       </div>
     </div>
