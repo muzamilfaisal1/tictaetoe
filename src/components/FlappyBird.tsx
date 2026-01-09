@@ -16,44 +16,48 @@ const GAME_HEIGHT = 600;
 const BIRD_SIZE = 40;
 const BIRD_X = 80;
 const PIPE_WIDTH = 60;
-const PIPE_GAP = 160;
-const GRAVITY = 0.5;
-const JUMP_FORCE = -9;
-const PIPE_SPEED = 3;
+const PIPE_GAP = 150;
+const GRAVITY = 0.6;
+const JUMP_FORCE = -10;
+const PIPE_SPEED = 4;
 
 function useSound() {
   const playSound = useCallback((type: "jump" | "score" | "hit") => {
     if (typeof window === "undefined") return;
-    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    try {
+      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
 
-    switch (type) {
-      case "jump":
-        oscillator.frequency.value = 400;
-        oscillator.type = "sine";
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.1);
-        break;
-      case "score":
-        oscillator.frequency.value = 600;
-        oscillator.type = "sine";
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.1);
-        break;
-      case "hit":
-        oscillator.frequency.value = 150;
-        oscillator.type = "sawtooth";
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.3);
-        break;
+      switch (type) {
+        case "jump":
+          oscillator.frequency.value = 400;
+          oscillator.type = "sine";
+          gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + 0.1);
+          break;
+        case "score":
+          oscillator.frequency.value = 600;
+          oscillator.type = "sine";
+          gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + 0.1);
+          break;
+        case "hit":
+          oscillator.frequency.value = 150;
+          oscillator.type = "sawtooth";
+          gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + 0.3);
+          break;
+      }
+    } catch (e) {
+      // Audio not supported
     }
   }, []);
   return { playSound };
@@ -62,135 +66,157 @@ function useSound() {
 export default function FlappyBird({ onBack }: { onBack: () => void }) {
   const [gameState, setGameState] = useState<GameState>("menu");
   const [birdY, setBirdY] = useState(GAME_HEIGHT / 2);
-  const [birdVelocity, setBirdVelocity] = useState(0);
+  const [birdRotation, setBirdRotation] = useState(0);
   const [pipes, setPipes] = useState<Pipe[]>([]);
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  const gameLoopRef = useRef<number | null>(null);
+  // Use refs for game loop values
+  const birdYRef = useRef(GAME_HEIGHT / 2);
+  const birdVelocityRef = useRef(0);
+  const pipesRef = useRef<Pipe[]>([]);
+  const scoreRef = useRef(0);
+  const gameStateRef = useRef<GameState>("menu");
+  const lastPipeSpawnRef = useRef(0);
   const pipeIdRef = useRef(0);
+  const animationFrameRef = useRef<number | null>(null);
+
   const { playSound } = useSound();
 
-  // Load high score from localStorage
+  // Keep refs in sync
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+
+  // Load high score
   useEffect(() => {
     const saved = localStorage.getItem("flappyHighScore");
     if (saved) setHighScore(parseInt(saved));
   }, []);
 
-  // Save high score
-  useEffect(() => {
-    if (score > highScore) {
-      setHighScore(score);
-      localStorage.setItem("flappyHighScore", score.toString());
-    }
-  }, [score, highScore]);
-
   const jump = useCallback(() => {
-    if (gameState === "playing") {
-      setBirdVelocity(JUMP_FORCE);
+    if (gameStateRef.current === "playing") {
+      birdVelocityRef.current = JUMP_FORCE;
       if (soundEnabled) playSound("jump");
-    } else if (gameState === "menu" || gameState === "gameover") {
-      startGame();
-    }
-  }, [gameState, soundEnabled, playSound]);
+    } else if (gameStateRef.current === "menu" || gameStateRef.current === "gameover") {
+      // Start game
+      birdYRef.current = GAME_HEIGHT / 2;
+      birdVelocityRef.current = 0;
+      pipesRef.current = [];
+      scoreRef.current = 0;
+      pipeIdRef.current = 0;
+      lastPipeSpawnRef.current = Date.now();
 
-  const startGame = () => {
-    setBirdY(GAME_HEIGHT / 2);
-    setBirdVelocity(0);
-    setPipes([]);
-    setScore(0);
-    pipeIdRef.current = 0;
-    setGameState("playing");
-  };
-
-  const endGame = useCallback(() => {
-    setGameState("gameover");
-    if (soundEnabled) playSound("hit");
-    if (gameLoopRef.current) {
-      cancelAnimationFrame(gameLoopRef.current);
+      setBirdY(GAME_HEIGHT / 2);
+      setBirdRotation(0);
+      setPipes([]);
+      setScore(0);
+      setGameState("playing");
+      gameStateRef.current = "playing";
     }
   }, [soundEnabled, playSound]);
 
-  // Game loop
+  const endGame = useCallback(() => {
+    if (gameStateRef.current !== "playing") return;
+
+    setGameState("gameover");
+    gameStateRef.current = "gameover";
+
+    if (soundEnabled) playSound("hit");
+
+    // Update high score
+    if (scoreRef.current > highScore) {
+      setHighScore(scoreRef.current);
+      localStorage.setItem("flappyHighScore", scoreRef.current.toString());
+    }
+  }, [soundEnabled, playSound, highScore]);
+
+  // Main game loop
   useEffect(() => {
     if (gameState !== "playing") return;
 
-    let lastPipeSpawn = Date.now();
-
     const gameLoop = () => {
-      // Update bird
-      setBirdVelocity((v) => v + GRAVITY);
-      setBirdY((y) => {
-        const newY = y + birdVelocity;
-        // Check ground/ceiling collision
-        if (newY < 0 || newY > GAME_HEIGHT - BIRD_SIZE) {
-          endGame();
-          return y;
-        }
-        return newY;
-      });
+      if (gameStateRef.current !== "playing") return;
+
+      // Update bird physics
+      birdVelocityRef.current += GRAVITY;
+      birdYRef.current += birdVelocityRef.current;
+
+      // Check boundaries
+      if (birdYRef.current < 0) {
+        birdYRef.current = 0;
+        birdVelocityRef.current = 0;
+      }
+
+      if (birdYRef.current > GAME_HEIGHT - BIRD_SIZE - 4) {
+        endGame();
+        return;
+      }
 
       // Spawn pipes
       const now = Date.now();
-      if (now - lastPipeSpawn > 1800) {
-        lastPipeSpawn = now;
-        const gapY = Math.random() * (GAME_HEIGHT - PIPE_GAP - 100) + 50;
-        setPipes((prev) => [
-          ...prev,
-          { id: pipeIdRef.current++, x: GAME_WIDTH, gapY, passed: false },
-        ]);
+      if (now - lastPipeSpawnRef.current > 1600) {
+        lastPipeSpawnRef.current = now;
+        const gapY = Math.random() * (GAME_HEIGHT - PIPE_GAP - 150) + 75;
+        pipesRef.current.push({
+          id: pipeIdRef.current++,
+          x: GAME_WIDTH,
+          gapY,
+          passed: false,
+        });
       }
 
-      // Update pipes
-      setPipes((prev) => {
-        return prev
-          .map((pipe) => ({ ...pipe, x: pipe.x - PIPE_SPEED }))
-          .filter((pipe) => pipe.x > -PIPE_WIDTH);
-      });
-
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
-    };
-
-    gameLoopRef.current = requestAnimationFrame(gameLoop);
-
-    return () => {
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-      }
-    };
-  }, [gameState, birdVelocity, endGame]);
-
-  // Collision detection and scoring
-  useEffect(() => {
-    if (gameState !== "playing") return;
-
-    pipes.forEach((pipe) => {
+      // Update pipes and check collisions
       const birdLeft = BIRD_X;
       const birdRight = BIRD_X + BIRD_SIZE;
-      const birdTop = birdY;
-      const birdBottom = birdY + BIRD_SIZE;
+      const birdTop = birdYRef.current;
+      const birdBottom = birdYRef.current + BIRD_SIZE;
 
-      const pipeLeft = pipe.x;
-      const pipeRight = pipe.x + PIPE_WIDTH;
-      const gapTop = pipe.gapY;
-      const gapBottom = pipe.gapY + PIPE_GAP;
+      pipesRef.current = pipesRef.current
+        .map((pipe) => {
+          pipe.x -= PIPE_SPEED;
 
-      // Check collision
-      if (birdRight > pipeLeft && birdLeft < pipeRight) {
-        if (birdTop < gapTop || birdBottom > gapBottom) {
-          endGame();
-        }
+          // Check collision
+          const pipeLeft = pipe.x;
+          const pipeRight = pipe.x + PIPE_WIDTH;
+          const gapTop = pipe.gapY;
+          const gapBottom = pipe.gapY + PIPE_GAP;
+
+          if (birdRight > pipeLeft && birdLeft < pipeRight) {
+            if (birdTop < gapTop || birdBottom > gapBottom) {
+              endGame();
+            }
+          }
+
+          // Check if passed
+          if (!pipe.passed && pipe.x + PIPE_WIDTH < BIRD_X) {
+            pipe.passed = true;
+            scoreRef.current += 1;
+            setScore(scoreRef.current);
+            if (soundEnabled) playSound("score");
+          }
+
+          return pipe;
+        })
+        .filter((pipe) => pipe.x > -PIPE_WIDTH);
+
+      // Update React state for rendering
+      setBirdY(birdYRef.current);
+      setBirdRotation(Math.min(Math.max(birdVelocityRef.current * 3, -30), 90));
+      setPipes([...pipesRef.current]);
+
+      animationFrameRef.current = requestAnimationFrame(gameLoop);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(gameLoop);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
-
-      // Check if passed pipe
-      if (!pipe.passed && pipe.x + PIPE_WIDTH < BIRD_X) {
-        pipe.passed = true;
-        setScore((s) => s + 1);
-        if (soundEnabled) playSound("score");
-      }
-    });
-  }, [pipes, birdY, gameState, endGame, soundEnabled, playSound]);
+    };
+  }, [gameState, endGame, soundEnabled, playSound]);
 
   // Keyboard controls
   useEffect(() => {
@@ -245,18 +271,18 @@ export default function FlappyBird({ onBack }: { onBack: () => void }) {
 
       {/* Game area */}
       <div
-        className="relative bg-cyan-300 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden cursor-pointer"
+        className="relative bg-cyan-300 border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden cursor-pointer select-none"
         style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
         onClick={jump}
         onTouchStart={(e) => { e.preventDefault(); jump(); }}
       >
         {/* Clouds decoration */}
-        <div className="absolute top-10 left-10 w-16 h-8 bg-white border-2 border-black rounded-full" />
-        <div className="absolute top-20 right-20 w-20 h-10 bg-white border-2 border-black rounded-full" />
-        <div className="absolute top-40 left-1/2 w-14 h-7 bg-white border-2 border-black rounded-full" />
+        <div className="absolute top-10 left-10 w-16 h-8 bg-white border-2 border-black rounded-full opacity-80" />
+        <div className="absolute top-20 right-20 w-20 h-10 bg-white border-2 border-black rounded-full opacity-80" />
+        <div className="absolute top-40 left-1/2 w-14 h-7 bg-white border-2 border-black rounded-full opacity-80" />
 
         {/* Ground */}
-        <div className="absolute bottom-0 left-0 right-0 h-4 bg-lime-500 border-t-4 border-black" />
+        <div className="absolute bottom-0 left-0 right-0 h-4 bg-lime-600 border-t-4 border-black" />
 
         {/* Pipes */}
         {pipes.map((pipe) => (
@@ -271,8 +297,10 @@ export default function FlappyBird({ onBack }: { onBack: () => void }) {
                 height: pipe.gapY,
               }}
             >
-              {/* Pipe cap */}
-              <div className="absolute -left-1 -bottom-0 w-[68px] h-6 bg-lime-600 border-4 border-black" />
+              <div
+                className="absolute left-[-4px] bottom-0 bg-lime-600 border-4 border-black"
+                style={{ width: PIPE_WIDTH + 8, height: 24 }}
+              />
             </div>
 
             {/* Bottom pipe */}
@@ -282,24 +310,26 @@ export default function FlappyBird({ onBack }: { onBack: () => void }) {
                 left: pipe.x,
                 top: pipe.gapY + PIPE_GAP,
                 width: PIPE_WIDTH,
-                height: GAME_HEIGHT - pipe.gapY - PIPE_GAP,
+                height: GAME_HEIGHT - pipe.gapY - PIPE_GAP - 4,
               }}
             >
-              {/* Pipe cap */}
-              <div className="absolute -left-1 -top-0 w-[68px] h-6 bg-lime-600 border-4 border-black" />
+              <div
+                className="absolute left-[-4px] top-0 bg-lime-600 border-4 border-black"
+                style={{ width: PIPE_WIDTH + 8, height: 24 }}
+              />
             </div>
           </div>
         ))}
 
         {/* Bird */}
         <div
-          className="absolute bg-yellow-400 border-4 border-black rounded-lg flex items-center justify-center transition-transform"
+          className="absolute bg-yellow-400 border-4 border-black rounded-lg"
           style={{
             left: BIRD_X,
             top: birdY,
             width: BIRD_SIZE,
             height: BIRD_SIZE,
-            transform: `rotate(${Math.min(birdVelocity * 3, 45)}deg)`,
+            transform: `rotate(${birdRotation}deg)`,
           }}
         >
           {/* Eye */}
@@ -307,21 +337,26 @@ export default function FlappyBird({ onBack }: { onBack: () => void }) {
             <div className="absolute top-0 right-0 w-1.5 h-1.5 bg-black rounded-full" />
           </div>
           {/* Beak */}
-          <div className="absolute right-[-8px] top-1/2 -translate-y-1/2 w-0 h-0
-            border-t-[6px] border-t-transparent
-            border-l-[10px] border-l-orange-500
-            border-b-[6px] border-b-transparent" />
+          <div
+            className="absolute right-[-10px] top-1/2 w-0 h-0"
+            style={{
+              marginTop: -6,
+              borderTop: "6px solid transparent",
+              borderLeft: "12px solid #f97316",
+              borderBottom: "6px solid transparent",
+            }}
+          />
           {/* Wing */}
-          <div className="absolute left-1 top-1/2 -translate-y-1/2 w-4 h-3 bg-yellow-500 border-2 border-black rounded" />
+          <div className="absolute left-1 top-3 w-4 h-3 bg-yellow-500 border-2 border-black rounded" />
         </div>
 
         {/* Menu overlay */}
         {gameState === "menu" && (
           <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
             <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center">
-              <div className="text-4xl mb-4">🐦</div>
-              <h2 className="text-2xl font-black mb-4">READY?</h2>
-              <p className="font-bold mb-4">Tap or Press Space to Flap!</p>
+              <div className="text-5xl mb-4">🐦</div>
+              <h2 className="text-2xl font-black mb-2">READY?</h2>
+              <p className="font-bold mb-4 text-gray-600">Tap or Press Space to Flap!</p>
               <div className="bg-lime-400 border-4 border-black px-6 py-3 font-black text-xl">
                 TAP TO START
               </div>
@@ -336,9 +371,9 @@ export default function FlappyBird({ onBack }: { onBack: () => void }) {
               <h2 className="text-3xl font-black mb-2 text-rose-500">GAME OVER</h2>
               <div className="text-5xl font-black mb-2">{score}</div>
               <p className="font-bold text-gray-600 mb-4">
-                {score > 0 && score >= highScore ? "NEW HIGH SCORE!" : `Best: ${highScore}`}
+                {score > 0 && score >= highScore ? "🎉 NEW HIGH SCORE!" : `Best: ${highScore}`}
               </p>
-              <div className="bg-cyan-400 border-4 border-black px-6 py-3 font-black text-xl cursor-pointer hover:bg-cyan-300">
+              <div className="bg-cyan-400 border-4 border-black px-6 py-3 font-black text-xl">
                 TAP TO RETRY
               </div>
             </div>
