@@ -177,48 +177,32 @@ function Square({
   value,
   onClick,
   isWinning,
-  index,
   disabled,
 }: {
   value: Player;
   onClick: () => void;
   isWinning: boolean;
-  index: number;
   disabled: boolean;
 }) {
-  const [isNew, setIsNew] = useState(false);
-
-  useEffect(() => {
-    if (value) {
-      setIsNew(true);
-      const timer = setTimeout(() => setIsNew(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [value]);
-
   return (
     <button
       disabled={disabled}
-      className={`relative w-24 h-24 sm:w-28 sm:h-28 text-5xl sm:text-6xl font-bold rounded-2xl transition-colors duration-300 flex items-center justify-center
-        backdrop-blur-sm border-2 overflow-hidden group
+      className={`relative w-24 h-24 sm:w-28 sm:h-28 text-5xl sm:text-6xl font-bold rounded-2xl flex items-center justify-center
+        backdrop-blur-sm border-2 overflow-hidden
         ${isWinning
-          ? "bg-gradient-to-br from-emerald-400/30 to-cyan-400/30 border-emerald-400 shadow-[0_0_30px_rgba(52,211,153,0.5)]"
-          : "bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+          ? "bg-emerald-400/30 border-emerald-400"
+          : "bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40"
         }
-        ${!value && !isWinning && !disabled ? "cursor-pointer hover:scale-105 transition-transform" : ""}
+        ${!value && !disabled ? "cursor-pointer" : ""}
         ${disabled && !value ? "opacity-50 cursor-not-allowed" : ""}
       `}
       onClick={onClick}
-      style={{ animationDelay: `${index * 50}ms` }}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-
       <span
-        className={`relative z-10 transition-all duration-300 ${isNew ? "scale-125 rotate-12" : "scale-100 rotate-0"}
-          ${value === "X"
-            ? "text-transparent bg-clip-text bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 drop-shadow-[0_0_15px_rgba(168,85,247,0.8)]"
+        className={`${value === "X"
+            ? "text-transparent bg-clip-text bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500"
             : value === "O"
-            ? "text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 via-teal-400 to-emerald-400 drop-shadow-[0_0_15px_rgba(45,212,191,0.8)]"
+            ? "text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 via-teal-400 to-emerald-400"
             : ""
           }`}
       >
@@ -625,7 +609,6 @@ export default function Home() {
                     value={square}
                     onClick={() => handleClick(index)}
                     isWinning={line?.includes(index) || false}
-                    index={index}
                     disabled={isGameOver}
                   />
                 ))}
