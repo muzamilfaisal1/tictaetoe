@@ -1,48 +1,163 @@
-# Arcade Alley
+# ARCADE ALLEY
 
-> Play classic arcade games in your browser — no quarters required.
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  █████╗ ██████╗  ██████╗ █████╗ ██████╗ ███████╗           ┃
+┃ ██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔══██╗██╔════╝           ┃
+┃ ███████║██████╔╝██║     ███████║██║  ██║█████╗             ┃
+┃ ██╔══██║██╔══██╗██║     ██╔══██║██║  ██║██╔══╝             ┃
+┃ ██║  ██║██║  ██║╚██████╗██║  ██║██████╔╝███████╗           ┃
+┃ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═════╝ ╚══════╝           ┃
+┃              █████╗ ██╗     ██╗     ███████╗██╗   ██╗      ┃
+┃             ██╔══██╗██║     ██║     ██╔════╝╚██╗ ██╔╝      ┃
+┃             ███████║██║     ██║     █████╗   ╚████╔╝       ┃
+┃             ██╔══██║██║     ██║     ██╔══╝    ╚██╔╝        ┃
+┃             ██║  ██║███████╗███████╗███████╗   ██║         ┃
+┃             ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝   ╚═╝         ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+```
 
-A collection of classic arcade games built with Next.js, React, and Tailwind CSS. Features a retro-inspired neo-brutalist design.
+> **Play classic arcade games in your browser — no quarters required.**
 
-## Games
+A retro game arcade with a **neo-brutalist** design. Bold colors. Hard shadows. Pure fun.
 
-| Game | Description |
-|------|-------------|
-| **Tic Tac Toe** | Classic X and O game. Play against a friend or computer |
-| **Flappy Bird** | Tap to fly through pipes. How far can you go? |
-| **Snake** | Eat food to grow longer. Don't hit the walls or yourself |
-| **Asteroids** | Pilot your ship and blast asteroids into space dust |
-| **Road Rush** | Dodge traffic, collect coins, and survive the endless road |
-| **Tetris** | Stack falling blocks and clear lines |
+---
 
-## Tech Stack
+## **WHAT'S INSIDE**
 
-- [Next.js](https://nextjs.org) 16
-- [React](https://react.dev) 19
-- [Tailwind CSS](https://tailwindcss.com) 4
-- [Framer Motion](https://www.framer.com/motion/) for animations
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│   ⭕ TIC TAC TOE      Classic X and O. Beat the computer.  │
+│                                                             │
+│   🐦 FLAPPY BIRD      Tap. Fly. Don't hit pipes.           │
+│                                                             │
+│   🐍 SNAKE            Eat. Grow. Survive.                  │
+│                                                             │
+│   🚀 ASTEROIDS        Blast rocks. Stay alive.             │
+│                                                             │
+│   🏎️ ROAD RUSH        Dodge cars. Grab coins.              │
+│                                                             │
+│   🧱 TETRIS           Stack blocks. Clear lines.           │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
-## Getting Started
+---
 
+## **FEATURES**
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  ██ RESPONSIVE        Works on desktop, tablet, and mobile  ║
+║  ██ NO ADS            Just games. Nothing else.             ║
+║  ██ KEYBOARD + TOUCH  Play however you want                 ║
+║  ██ HIGH SCORES       Track your best runs                  ║
+║  ██ INSTANT PLAY      No loading. No signup. Just play.     ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## **TECH STACK**
+
+| | |
+|---|---|
+| **Framework** | [Next.js](https://nextjs.org) 16 |
+| **UI** | [React](https://react.dev) 19 |
+| **Styling** | [Tailwind CSS](https://tailwindcss.com) 4 |
+| **Animations** | [Framer Motion](https://www.framer.com/motion/) |
+
+---
+
+## **GET STARTED**
+
+**1. Clone it**
 ```bash
-# Install dependencies
-npm install
+git clone https://github.com/YOUR_USERNAME/arcade-alley.git
+cd arcade-alley
+```
 
-# Run the development server
+**2. Install it**
+```bash
+npm install
+```
+
+**3. Run it**
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to play.
+**4. Play it**
 
-## Scripts
+Open **[http://localhost:3000](http://localhost:3000)** and start gaming.
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
+---
+
+## **SCRIPTS**
+
+| Command | What it does |
+|---------|--------------|
+| `npm run dev` | Start dev server |
 | `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
+| `npm run start` | Run production build |
+| `npm run lint` | Check for errors |
 
-## License
+---
 
-MIT
+## **PROJECT STRUCTURE**
+
+```
+src/
+├── app/
+│   ├── page.tsx        # Game launcher menu
+│   └── layout.tsx      # Root layout
+├── components/
+│   ├── TicTacToe.tsx   # ⭕ Tic Tac Toe
+│   ├── FlappyBird.tsx  # 🐦 Flappy Bird
+│   ├── Snake.tsx       # 🐍 Snake
+│   ├── Asteroids.tsx   # 🚀 Asteroids
+│   ├── EndlessRunner.tsx # 🏎️ Road Rush
+│   └── Tetris.tsx      # 🧱 Tetris
+```
+
+---
+
+## **CONTROLS**
+
+| Game | Desktop | Mobile |
+|------|---------|--------|
+| **Tic Tac Toe** | Click | Tap |
+| **Flappy Bird** | Space / Click | Tap |
+| **Snake** | Arrow Keys | Swipe |
+| **Asteroids** | Arrows + Space | On-screen controls |
+| **Road Rush** | Arrow Keys | Tilt / Tap |
+| **Tetris** | Arrow Keys | On-screen controls |
+
+---
+
+## **CONTRIBUTING**
+
+```
+┌────────────────────────────────────────┐
+│  1. Fork it                            │
+│  2. Create a branch                    │
+│  3. Make changes                       │
+│  4. Open a PR                          │
+│  5. Get it merged                      │
+└────────────────────────────────────────┘
+```
+
+Found a bug? Have an idea? [Open an issue](../../issues).
+
+---
+
+## **LICENSE**
+
+MIT — do whatever you want with it.
+
+---
+
+<p align="center">
+  <strong>[ INSERT COIN TO CONTINUE ]</strong>
+</p>
